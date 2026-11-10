@@ -1361,6 +1361,7 @@
     lastFocus = document.activeElement;
     openModalEl = $(id);
     openModalEl.hidden = false;
+    document.body.classList.add('modal-open');
     openModalEl.querySelector('.modal').scrollTop = 0;
     document.body.style.overflow = 'hidden';
     const closeBtn = openModalEl.querySelector('.modal-close');
@@ -1370,6 +1371,7 @@
     if (!openModalEl) return false;
     openModalEl.hidden = true;
     openModalEl = null;
+    document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
     if (!silent && lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
     return true;
@@ -1972,7 +1974,17 @@
     });
   }
 
+  // En celular, el botón flotante de WhatsApp se oculta mientras respondes el test
+  function initFabWatch() {
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => document.body.classList.toggle('test-in-view', en.isIntersecting));
+    }, { threshold: 0.15 });
+    io.observe(document.querySelector('.navigation-card'));
+  }
+
   function initNav() {
+    initFabWatch();
     $('menu-btn').addEventListener('click', () => toggleMenu());
     $('mobile-nav').addEventListener('click', (e) => { if (e.target.closest('a, button')) toggleMenu(false); });
     let ticking = false;
@@ -2743,6 +2755,16 @@
     $('plan-title').textContent = lang === 'qu' ? 'Ruranay plan' : (done === PLAN.length ? '¡Plan completado! 🎉' : 'Mi plan de acción');
   }
   function initPlan() {
+    const tg = $('plan-toggle');
+    tg.addEventListener('click', () => {
+      const open = !$('plan-card').classList.contains('open');
+      $('plan-card').classList.toggle('open', open);
+      tg.setAttribute('aria-expanded', String(open));
+    });
+    // En pantallas grandes, los detalles de becas aparecen abiertos
+    if (window.matchMedia('(min-width: 641px)').matches) {
+      document.querySelectorAll('[data-open-desktop]').forEach((d) => { d.open = true; });
+    }
     $('plan-list').addEventListener('change', (e) => {
       const id = e.target.dataset.plan;
       if (!id) return;
